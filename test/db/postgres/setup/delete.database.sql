@@ -1,0 +1,3 @@
+DROP TABLE sqlerpg.TEST;
+DROP TABLE sqlerpg.TEST2;
+DROP SCHEMA sqlerpg;
