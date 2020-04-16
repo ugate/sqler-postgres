@@ -1,16 +1,16 @@
 <b class="jsdocp-remove-me">
 
-# ![](https://raw.githubusercontent.com/ugate/sqler-mdb/master/jsdocp/static/favicon-32x32.png) `sqler-mdb`
+# ![](https://raw.githubusercontent.com/ugate/sqler-postgres/master/jsdocp/static/favicon-32x32.png) `sqler-postgres`
 
-[![npm version](https://badgen.net/npm/v/sqler-mdb?color=orange&icon=npm)](https://www.npmjs.com/package/sqler-mdb)
-[![Build Status](https://badgen.net/travis/ugate/sqler-mdb?icon=travis)](https://travis-ci.com/ugate/sqler-mdb)
-[![Dependency Status](https://badgen.net/david/dep/ugate/sqler-mdb)](https://david-dm.org/ugate/sqler-mdb)
-[![Dev Dependency Status](https://badgen.net/david/dev/ugate/sqler-mdb)](https://david-dm.org/ugate/sqler-mdb?type=dev)
+[![npm version](https://badgen.net/npm/v/sqler-postgres?color=orange&icon=npm)](https://www.npmjs.com/package/sqler-postgres)
+[![Build Status](https://badgen.net/travis/ugate/sqler-postgres?icon=travis)](https://travis-ci.com/ugate/sqler-postgres)
+[![Dependency Status](https://badgen.net/david/dep/ugate/sqler-postgres)](https://david-dm.org/ugate/sqler-postgres)
+[![Dev Dependency Status](https://badgen.net/david/dev/ugate/sqler-postgres)](https://david-dm.org/ugate/sqler-postgres?type=dev)
 
 </b>
 
-[MariaDB](https://www.npmjs.com/package/mariadb) and/or [MySQL](https://www.mysql.com) dialect for [`sqler`](https://github.com/ugate/sqler).
+[PostgreSQL](https://www.postgresql.org) dialect for [`sqler`](https://github.com/ugate/sqler).
 
-- [Getting Started (w/compatibility matrix)](https://ugate.github.io/sqler-mdb/tutorial-1-manual.html)
-- [Usage](https://ugate.github.io/sqler-mdb/tutorial-2-mdb)
-- [API Docs](https://ugate.github.io/sqler-mdb/module.exports.html)
+- [Getting Started (w/compatibility matrix)](https://ugate.github.io/sqler-postgres/tutorial-1-manual.html)
+- [Usage](https://ugate.github.io/sqler-postgres/tutorial-2-postgres)
+- [API Docs](https://ugate.github.io/sqler-postgres/module.exports.html)
