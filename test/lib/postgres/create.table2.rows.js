@@ -10,13 +10,12 @@ module.exports = async function runExample(manager, connName) {
   // https://www.npmjs.com/package/moment-db
   const date = new Date().toISOString().replace('T', ' ').replace('Z', '');
 
-  // The odbc module currently doesn't support Fs.ReadStream/Fs.createReadStream()
+  // The driver module currently doesn't support Fs.ReadStream/Fs.createReadStream()
   const report = await Fs.promises.readFile('./test/files/audit-report.png');
 
-  // Insert rows into multiple tables within a single ODBC execution
-  const rslt = await manager.db[connName].create.table.rows({
+  // Insert row (implicit transaction)
+  const rslt = await manager.db[connName].create.table2.rows({
     binds: {
-      id: 1, name: 'TABLE: 1, ROW: 1', created: date, updated: date,
       id2: 1, name2: 'TABLE: 2, ROW: 1', report2: report, created2: date, updated2: date
     }
   });

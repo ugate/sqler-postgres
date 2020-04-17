@@ -12,5 +12,5 @@
 [PostgreSQL](https://www.postgresql.org) dialect for [`sqler`](https://github.com/ugate/sqler).
 
 - [Getting Started (w/compatibility matrix)](https://ugate.github.io/sqler-postgres/tutorial-1-manual.html)
-- [Usage](https://ugate.github.io/sqler-postgres/tutorial-2-postgres)
+- [Usage](https://ugate.github.io/sqler-postgres/tutorial-2-usage.html)
 - [API Docs](https://ugate.github.io/sqler-postgres/module.exports.html)

@@ -39,11 +39,11 @@ class Tester {
     await priv.mgr.init();
     
     if (priv.mgr.db[priv.vendor].setup) {
-      const createDB = getCrudOp('create', priv.vendor, 'database');
+      const createDB = getCrudOp('create', priv.vendor, 'database', true);
       await createDB(priv.mgr, priv.vendor);
-      const createT1 = getCrudOp('create', priv.vendor, 'table1');
+      const createT1 = getCrudOp('create', priv.vendor, 'table1', true);
       await createT1(priv.mgr, priv.vendor);
-      const createT2 = getCrudOp('create', priv.vendor, 'table2');
+      const createT2 = getCrudOp('create', priv.vendor, 'table2', true);
       await createT2(priv.mgr, priv.vendor);
     }
     priv.created = true;
@@ -68,7 +68,11 @@ class Tester {
     
     try {
       if (priv.mgr.db[priv.vendor].setup) {
-        const deleteDB = getCrudOp('delete', priv.vendor, 'database');
+        const deleteT1 = getCrudOp('delete', priv.vendor, 'table1', true);
+        await deleteT1(priv.mgr, priv.vendor);
+        const deleteT2 = getCrudOp('delete', priv.vendor, 'table2', true);
+        await deleteT2(priv.mgr, priv.vendor);
+        const deleteDB = getCrudOp('delete', priv.vendor, 'database', true);
         await deleteDB(priv.mgr, priv.vendor);
       }
       priv.created = false;
@@ -136,27 +140,31 @@ class Tester {
       lastUpdated = updated;
     };
 
-    const create = getCrudOp('create', priv.vendor);
-    rslts[++rslti] = await create(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'create');
-
-    const read = getCrudOp('read', priv.vendor);
-    rslts[++rslti] = await read(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'read', 'TABLE');
-
-    const update = getCrudOp('update', priv.vendor);
-    rslts[++rslti] = await update(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'update');
-
-    rslts[++rslti] = await read(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'update read', 'UPDATE');
-
-    const del = getCrudOp('delete', priv.vendor);
-    rslts[++rslti] = await del(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'delete');
-
-    rslts[++rslti] = await read(priv.mgr, priv.vendor);
-    crudly(rslts[rslti], 'delete read', null, 0);
+    let key, create, read, update, del;
+    for (let i = 1; i <= 2; i++) {
+      key = `table${i}.rows`;
+      create = getCrudOp('create', priv.vendor, key);
+      rslts[++rslti] = await create(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'create');
+  
+      read = getCrudOp('read', priv.vendor, key);
+      rslts[++rslti] = await read(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'read', 'TABLE');
+  
+      update = getCrudOp('update', priv.vendor, key);
+      rslts[++rslti] = await update(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'update');
+  
+      rslts[++rslti] = await read(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'update read', 'UPDATE');
+  
+      del = getCrudOp('delete', priv.vendor, key);
+      rslts[++rslti] = await del(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'delete');
+  
+      rslts[++rslti] = await read(priv.mgr, priv.vendor);
+      crudly(rslts[rslti], 'delete read', null, 0);
+    }
 
     if (LOGGER.debug) LOGGER.debug(`CRUD ${priv.vendor} execution results:`, ...rslts);
     Labrat.header(`${priv.vendor}: Completed CRUD tests`, 'info');
@@ -386,14 +394,15 @@ function getConf(overrides) {
 
 /**
  * Gets the `async function` that will execute a CRUD operation
- * @param {String} name The name of the CRUD operation (e.g. `create`, `read`, etc.)
+ * @param {String} cmd The command name of the CRUD operation (e.g. `create`, `read`, etc.)
  * @param {String} vendor The vendor to use (e.g. `oracle`, `mssql`, etc.)
- * @param {String} [setupKey] Truty when the CRUD operation is for a setup operation (e.g. creating/dropping tables)
+ * @param {String} key Key that indicates the file name (w/o extension)
+ * @param {Boolean} [isSetup] Truthy when the CRUD operation is for a setup operation (e.g. creating/dropping tables)
  * @returns {Function} The `async function(manager)` that will return the CRUD results
  */
-function getCrudOp(name, vendor, setupKey) {
-  const base = Path.join(process.cwd(), `test/lib/${vendor}${setupKey ? '/setup' : ''}`);
-  const pth = Path.join(base, `${name}.${setupKey || 'table.rows'}.js`);
+function getCrudOp(cmd, vendor, key, isSetup) {
+  const base = Path.join(process.cwd(), `test/lib/${vendor}${isSetup ? '/setup' : ''}`);
+  const pth = Path.join(base, `${cmd}.${key}.js`);
   return require(pth);
 }
 

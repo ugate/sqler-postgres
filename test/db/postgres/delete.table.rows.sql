@@ -1,4 +1,0 @@
-DELETE FROM sqlerpg.TEST
-WHERE ID = :id;
-DELETE FROM sqlerpg.TEST2
-WHERE ID = :id2;

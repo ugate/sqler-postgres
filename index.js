@@ -70,8 +70,7 @@ module.exports = class PGDialect {
       dlt.at.opts.client;
     // sqler compatible state
     dlt.at.state = {
-      pending: 0,
-      connection: { count: 0, inUse: 0 }
+      pending: 0
     };
 
     dlt.at.errorLogger = errorLogger;
@@ -107,8 +106,6 @@ module.exports = class PGDialect {
           `max=${dlt.at.opts.pool.max} idleTimeoutMillis=${dlt.at.opts.pool.idleTimeoutMillis} ` +
           `connectionTimeoutMillis=${dlt.at.opts.pool.connectionTimeoutMillis}`);
       }
-      dlt.at.state.count = dlt.at.pool.totalCount;
-      dlt.at.state.inUse = dlt.at.pool.waitingCount;
       conn = await dlt.at.pool.connect();
       return dlt.at.pool;
     } catch (err) {
@@ -122,11 +119,7 @@ module.exports = class PGDialect {
       throw err;
     } finally {
       if (conn) {
-        try {
-          await conn.end();
-        } catch (cerr) {
-          if (error) error.closeError = cerr;
-        }
+        await operation(dlt, 'release', false, conn, opts, error)();
       }
     }
   }
@@ -172,26 +165,24 @@ module.exports = class PGDialect {
 
       if (!opts.transactionId && opts.type === 'READ') {
         rslts = await dlt.at.pool.query(dopts.query);
-        rtn.rows = rslts;
+        rtn.rows = rslts.rows;
+        rtn.raw = rslts;
       } else {
         // name will cause pg to use a prepared statement
         if (dopts.query.name === true) dopts.query.name = meta.name;
         conn = await dlt.this.getConnection(opts);
         rslts = await conn.query(dopts.query);
-        rtn.rows = rslts;
+        rtn.rows = rslts.rows;
+        rtn.raw = rslts;
         if (opts.autoCommit) {
           // PostgreSQL has no option to autocommit during SQL execution
           await operation(dlt, 'commit', false, conn, opts)();
-          await operation(dlt, 'end', true, conn, opts)();
         } else {
           dlt.at.state.pending++;
           rtn.commit = operation(dlt, 'commit', true, conn, opts);
           rtn.rollback = operation(dlt, 'rollback', true, conn, opts);
         }
       }
-
-      dlt.at.state.count = dlt.at.pool.totalCount;
-      dlt.at.state.inUse = dlt.at.pool.waitingCount;
 
       return rtn;
     } catch (err) {
@@ -253,7 +244,14 @@ module.exports = class PGDialect {
    * @returns {Manager~State} The state
    */
   get state() {
-    return JSON.parse(JSON.stringify(internal(this).at.state));
+    const dlt = internal(this);
+    return {
+      connection: {
+        count: (dlt.at.pool && dlt.at.pool.totalCount) || 0,
+        inUse: (dlt.at.pool && dlt.at.pool.waitingCount) || 0
+      },
+      pending: dlt.at.state.pending || (dlt.at.pool && dlt.at.pool.waitingCount) || 0
+    };
   }
 
   /**
@@ -273,11 +271,13 @@ module.exports = class PGDialect {
  * @param {Boolean} reset Truthy to reset the pending connection and transaction count when the operation completes successfully
  * @param {Object} conn The connection
  * @param {Manager~ExecOptions} [opts] The {@link Manager~ExecOptions}
+ * @param {Error} [error] An originating error where any oprational errors will be set as a property of the passed error
+ * (e.g. `name = 'close'` would result in `error.closeError = someInternalError`). __Internal Errors will not be thrown.__
  * @returns {Function} A no-arguement `async` function that returns the number or pending transactions
  */
-function operation(dlt, name, reset, conn, opts) {
+function operation(dlt, name, reset, conn, opts, error) {
   return async () => {
-    let error;
+    let ierr;
     try {
       if (dlt.at.logger) {
         dlt.at.logger(`sqler-postgres: Performing ${name} on connection pool "${dlt.at.opts.id}" (uncommitted transactions: ${dlt.at.state.pending})`);
@@ -292,19 +292,23 @@ function operation(dlt, name, reset, conn, opts) {
         dlt.at.state.pending = 0;
       }
     } catch (err) {
-      error = err;
+      ierr = err;
       if (dlt.at.errorLogger) {
         dlt.at.errorLogger(`sqler-postgres: Failed to ${name} ${dlt.at.state.pending} transaction(s) with options: ${
-          opts ? JSON.stringify(opts) : 'N/A'}`, error);
+          opts ? JSON.stringify(opts) : 'N/A'}`, ierr);
       }
-      throw error;
+      if (error) {
+        error[`${name}Error`] = err;
+      } else {
+        throw err;
+      }
     } finally {
-      if (name !== 'end') {
+      if (name !== 'end' && name !== 'release') {
         try {
-          await conn.end();
-        } catch (cerr) {
-          if (error) {
-            error.closeError = cerr;
+          await conn.release();
+        } catch (endErr) {
+          if (ierr) {
+            ierr.releaseError = endErr;
           }
         }
       }

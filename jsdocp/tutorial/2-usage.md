@@ -16,7 +16,7 @@ Test code that illustrates how to use MariaDB/MySQL with various examples
 ```jsdocp ./test/fixtures/run-example.js
 ```
 
-__Create Database:__
+__Create Schema:__
 
 ```jsdocp ./test/db/postgres/setup/create.database.sql
 -- db/postgres/setup/create.database.sql
@@ -41,11 +41,18 @@ __Create Table(s):__
 
 __Create Rows:__
 
-```jsdocp ./test/db/postgres/create.table.rows.sql
--- db/postgres/create.table.rows.sql
+```jsdocp ./test/db/postgres/create.table1.rows.sql
+-- db/postgres/create.table1.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/create.table.rows.js
+```jsdocp ./test/lib/postgres/create.table1.rows.js
+```
+
+```jsdocp ./test/db/postgres/create.table2.rows.sql
+-- db/postgres/create.table2.rows.sql
+```
+
+```jsdocp ./test/lib/postgres/create.table2.rows.js
 ```
 
 __Read Rows:__
@@ -59,23 +66,53 @@ __Read Rows:__
 
 __Update Rows:__
 
-```jsdocp ./test/db/postgres/update.table.rows.sql
--- db/postgres/update.table.rows.sql
+```jsdocp ./test/db/postgres/update.table1.rows.sql
+-- db/postgres/update.table1.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/update.table.rows.js
+```jsdocp ./test/lib/postgres/update.table1.rows.js
+```
+
+```jsdocp ./test/db/postgres/update.table2.rows.sql
+-- db/postgres/update.table2.rows.sql
+```
+
+```jsdocp ./test/lib/postgres/update.table2.rows.js
 ```
 
 __Delete Rows:__
 
-```jsdocp ./test/db/postgres/delete.table.rows.sql
--- db/postgres/delete.table.rows.sql
+```jsdocp ./test/db/postgres/delete.table1.rows.sql
+-- db/postgres/delete.table1.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/delete.table.rows.js
+```jsdocp ./test/lib/postgres/delete.table1.rows.js
 ```
 
-__Delete Database:__
+```jsdocp ./test/db/postgres/delete.table2.rows.sql
+-- db/postgres/delete.table2.rows.sql
+```
+
+```jsdocp ./test/lib/postgres/delete.table2.rows.js
+```
+
+__Delete Tables:__
+
+```jsdocp ./test/db/postgres/setup/delete.table1.sql
+-- db/postgres/setup/delete.table1.sql
+```
+
+```jsdocp ./test/lib/postgres/setup/delete.table1.js
+```
+
+```jsdocp ./test/db/postgres/setup/delete.table2.sql
+-- db/postgres/setup/delete.table2.sql
+```
+
+```jsdocp ./test/lib/postgres/setup/delete.table2.js
+```
+
+__Delete Schema:__
 
 ```jsdocp ./test/db/postgres/setup/delete.database.sql
 -- db/postgres/setup/delete.database.sql
