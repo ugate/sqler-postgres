@@ -141,31 +141,39 @@ class Tester {
       lastUpdated = updated;
     };
 
+    const count = 2;
     let key, create, read, update, del;
-    for (let i = 1; i <= 2; i++) {
+
+    for (let i = 1; i <= count; i++) {
       key = `table${i}.rows`;
       create = getCrudOp('create', priv.vendor, key);
       rslts[++rslti] = await create(priv.mgr, priv.vendor);
       crudly(rslts[rslti], 'create');
+    }
   
-      read = getCrudOp('read', priv.vendor, key);
-      rslts[++rslti] = await read(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'read', 'TABLE');
-  
+    read = getCrudOp('read', priv.vendor, key, 'table.rows');
+    rslts[++rslti] = await read(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'read', 'TABLE');
+
+    for (let i = 1; i <= count; i++) {
+      key = `table${i}.rows`;
       update = getCrudOp('update', priv.vendor, key);
       rslts[++rslti] = await update(priv.mgr, priv.vendor);
       crudly(rslts[rslti], 'update');
+    }
   
-      rslts[++rslti] = await read(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'update read', 'UPDATE');
+    rslts[++rslti] = await read(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'update read', 'UPDATE');
   
+    for (let i = 1; i <= count; i++) {
+      key = `table${i}.rows`;
       del = getCrudOp('delete', priv.vendor, key);
       rslts[++rslti] = await del(priv.mgr, priv.vendor);
       crudly(rslts[rslti], 'delete');
-  
-      rslts[++rslti] = await read(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'delete read', null, 0);
     }
+  
+    rslts[++rslti] = await read(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'delete read', null, 0);
 
     if (LOGGER.debug) LOGGER.debug(`CRUD ${priv.vendor} execution results:`, ...rslts);
     Labrat.header(`${priv.vendor}: Completed CRUD tests`, 'info');

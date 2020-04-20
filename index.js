@@ -159,7 +159,7 @@ module.exports = class PGDialect {
       const dopts = opts.driverOptions || {};
       if (!dopts.query) dopts.query = {};
       dopts.query.values = [];
-      dopts.query.text = dlt.at.track.positionalBinds(sql, bndp, dopts.query.values);
+      dopts.query.text = dlt.at.track.positionalBinds(sql, bndp, dopts.query.values, (name, index) => `$${index + 1}`);
 
       const rtn = {};
 

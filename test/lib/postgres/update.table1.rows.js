@@ -3,10 +3,7 @@
 // export just to illustrate module usage
 module.exports = async function runExample(manager, connName) {
 
-  // The odbc module needs the date to be in a valid ANSI compliant format.
-  // Could also use:
-  // https://www.npmjs.com/package/moment-db
-  const date = new Date().toISOString().replace('T', ' ').replace('Z', '');
+  const date = new Date();
 
   // binds
   const binds = {
