@@ -2,7 +2,8 @@
   "univ": {
     "db": {
       "postgres": {
-        "username": "travis"
+        "username": "travis",
+        "password": "travis"
       }
     }
   }
