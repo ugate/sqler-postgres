@@ -7,7 +7,6 @@ language: node_js
 node_js:
   - "lts/*"
 #services:
-#  - mysql
 #  - postgresql
 env:
   - REPO_VER=v1.2.0 POSTGRESQL_MAJOR=12

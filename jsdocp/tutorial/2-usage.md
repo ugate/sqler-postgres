@@ -12,7 +12,7 @@ __[Connection Options Configuration:](global.html#PGConnectionOptions)__
 ```jsdocp ./test/fixtures/postgres/conf.json
 ```
 
-Test code that illustrates how to use MariaDB/MySQL with various examples
+Test code that illustrates how to use PostgreSQL with various examples
 ```jsdocp ./test/fixtures/run-example.js
 ```
 
