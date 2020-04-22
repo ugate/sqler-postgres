@@ -34,9 +34,7 @@ __Create Table(s):__
 -- db/postgres/setup/create.table2.sql
 ```
 
-```jsdocp ./test/lib/postgres/setup/create.table1.js
-```
-```jsdocp ./test/lib/postgres/setup/create.table2.js
+```jsdocp ./test/lib/postgres/setup/create.tables.js
 ```
 
 __Create Rows:__
@@ -44,15 +42,11 @@ __Create Rows:__
 ```jsdocp ./test/db/postgres/create.table1.rows.sql
 -- db/postgres/create.table1.rows.sql
 ```
-
-```jsdocp ./test/lib/postgres/create.table1.rows.js
-```
-
 ```jsdocp ./test/db/postgres/create.table2.rows.sql
 -- db/postgres/create.table2.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/create.table2.rows.js
+```jsdocp ./test/lib/postgres/create.table.rows.js
 ```
 
 __Read Rows:__
@@ -69,15 +63,11 @@ __Update Rows:__
 ```jsdocp ./test/db/postgres/update.table1.rows.sql
 -- db/postgres/update.table1.rows.sql
 ```
-
-```jsdocp ./test/lib/postgres/update.table1.rows.js
-```
-
 ```jsdocp ./test/db/postgres/update.table2.rows.sql
 -- db/postgres/update.table2.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/update.table2.rows.js
+```jsdocp ./test/lib/postgres/update.table.rows.js
 ```
 
 __Delete Rows:__
@@ -85,15 +75,11 @@ __Delete Rows:__
 ```jsdocp ./test/db/postgres/delete.table1.rows.sql
 -- db/postgres/delete.table1.rows.sql
 ```
-
-```jsdocp ./test/lib/postgres/delete.table1.rows.js
-```
-
 ```jsdocp ./test/db/postgres/delete.table2.rows.sql
 -- db/postgres/delete.table2.rows.sql
 ```
 
-```jsdocp ./test/lib/postgres/delete.table2.rows.js
+```jsdocp ./test/lib/postgres/delete.table.rows.js
 ```
 
 __Delete Tables:__
@@ -101,15 +87,11 @@ __Delete Tables:__
 ```jsdocp ./test/db/postgres/setup/delete.table1.sql
 -- db/postgres/setup/delete.table1.sql
 ```
-
-```jsdocp ./test/lib/postgres/setup/delete.table1.js
-```
-
 ```jsdocp ./test/db/postgres/setup/delete.table2.sql
 -- db/postgres/setup/delete.table2.sql
 ```
 
-```jsdocp ./test/lib/postgres/setup/delete.table2.js
+```jsdocp ./test/lib/postgres/setup/delete.tables.js
 ```
 
 __Delete Schema:__

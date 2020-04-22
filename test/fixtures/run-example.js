@@ -5,7 +5,7 @@ const manager = new Manager(conf);
 await manager.init();
 
 // see subsequent examples for different examples
-const result = await runExample(manager, 'mdb');
+const result = await runExample(manager, 'postgres');
 
 console.log('Result:', result);
 

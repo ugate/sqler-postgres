@@ -38,9 +38,11 @@ lab.experiment(plan, () => {
   lab.test(`${plan}: Driver Options No Pool/Connection`, { timeout: TEST_TKO }, Tester.driverOptionsPoolConnNone);
   lab.test(`${plan}: Driver Options Pool or Connection`, { timeout: TEST_TKO }, Tester.driverOptionsPoolConnSwap);
   lab.test(`${plan}: Driver Options Named or Unnamed Placeholders`, { timeout: TEST_TKO }, Tester.driverOptionsNamedPlaceholdersSwap);
+  lab.test(`${plan}: Driver Options Client`, { timeout: TEST_TKO }, Tester.driverOptionsClient);
   lab.test(`${plan}: Host and Port Defaults`, { timeout: TEST_TKO }, Tester.hostPortSwap);
   lab.test(`${plan}: Multiple connections`, { timeout: TEST_TKO }, Tester.multipleConnections);
   lab.test(`${plan}: Close before init`, { timeout: TEST_TKO }, Tester.closeBeforeInit);
+  //lab.test(`${plan}: State`, { timeout: TEST_TKO }, Tester.state);
 
   lab.test(`${plan}: CRUD`, { timeout: TEST_TKO }, Tester.crud);
   lab.test(`${plan}: Execution Driver Options (Alternatives)`, { timeout: TEST_TKO }, Tester.execDriverOptionsAlt);

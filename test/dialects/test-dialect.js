@@ -51,7 +51,7 @@ module.exports = class PGTestDialect extends PGDialect {
   /**
    * @inheritdoc
    */
-  async exec(sql, opts, frags) {
+  async exec(sql, opts, frags, meta, errorOpts) {
     expect(sql, 'sql').to.be.string();
 
     expect(opts, 'opts').to.be.object();
@@ -63,7 +63,11 @@ module.exports = class PGTestDialect extends PGDialect {
     expect(state.connection.count, 'dialect.connection.count').to.be.number();
     expect(state.connection.inUse, 'dialect.connection.inUse').to.be.number();
 
-    return super.exec(sql, opts, frags);
+    expect(meta, 'meta').to.be.object();
+    expect(meta.name, 'meta').to.be.string();
+    expect(meta.name, 'meta').to.not.be.empty();
+
+    return super.exec(sql, opts, frags, meta, errorOpts);
   }
 
   /**
@@ -77,7 +81,7 @@ module.exports = class PGTestDialect extends PGDialect {
 /**
  * Expects the PostgreSQL driver options (when present)
  * @param {Manager~ConnectionOptions} opts The connection options to check
- * @param {MDBTestDialect} dlt The test dialect
+ * @param {PGTestDialect} dlt The test dialect
  */
 function expectDriverOptions(opts, dlt) {
   expect(dlt.driver, `${dlt.constructor.name} driver`).to.be.object();

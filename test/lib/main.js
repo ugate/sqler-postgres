@@ -46,10 +46,8 @@ class Tester {
     if (priv.mgr.db[priv.vendor].setup) {
       const createDB = getCrudOp('create', priv.vendor, 'database', true);
       await createDB(priv.mgr, priv.vendor);
-      const createT1 = getCrudOp('create', priv.vendor, 'table1', true);
-      await createT1(priv.mgr, priv.vendor);
-      const createT2 = getCrudOp('create', priv.vendor, 'table2', true);
-      await createT2(priv.mgr, priv.vendor);
+      const createTB = getCrudOp('create', priv.vendor, 'tables', true);
+      await createTB(priv.mgr, priv.vendor);
     }
     priv.created = true;
   }
@@ -73,10 +71,8 @@ class Tester {
     
     try {
       if (priv.mgr.db[priv.vendor].setup) {
-        const deleteT1 = getCrudOp('delete', priv.vendor, 'table1', true);
-        await deleteT1(priv.mgr, priv.vendor);
-        const deleteT2 = getCrudOp('delete', priv.vendor, 'table2', true);
-        await deleteT2(priv.mgr, priv.vendor);
+        const deleteTB = getCrudOp('delete', priv.vendor, 'tables', true);
+        await deleteTB(priv.mgr, priv.vendor);
         const deleteDB = getCrudOp('delete', priv.vendor, 'database', true);
         await deleteDB(priv.mgr, priv.vendor);
       }
@@ -117,62 +113,56 @@ class Tester {
     let rslti = -1, lastUpdated;
 
     // expect CRUD results
-    const crudly = (rslt, label, nameIncl, count = 2) => {
-      if (!rslt.rows) return;
-      expect(rslt.rows, `CRUD ${label} rows`).array();
-      if (!label.includes('read')) return;
-      expect(rslt.rows, `CRUD ${label} rows.length`).length(count);
-      let updated;
-      for (let row of rslt.rows) {
-        expect(row, `CRUD ${label} row`).object();
-        if (nameIncl) expect(row.name, `CRUD ${label} row.name`).includes(nameIncl);
-        updated = new Date(row.updated) || row.updated;
-        expect(updated, `CRUD ${label} row.updated`).date();
-        if (lastUpdated) expect(updated, `CRUD ${label} row.updated > lastUpdated`).greaterThan(lastUpdated);
-        // expect binary report image
-        if (row.report) {
-          expect(row.report, 'row.report').to.be.buffer();
-          if (row.reportPath) {
-            const reportBuffer = readChunk.sync(row.reportPath, 0, 12);
-            const reportType = imageType(reportBuffer);
-            expect(reportType, 'row.report Image Type').to.be.object();
-            expect(reportType.mime, 'row.report Image Mime-Type').to.equal('image/png');
+    const crudly = (rtn, label, nameIncl, count = 2) => {
+      const rslts = Array.isArray(rtn) ? rtn : [rtn];
+      let cnt = 0, updated;
+      for (let rslt of rslts) {
+        if (!rslt.rows) continue;
+        expect(rslt.rows, `CRUD ${label} rows`).array();
+        if (!label.includes('read')) continue;
+        cnt++;
+        expect(rslt.rows, `CRUD ${label} rows.length`).length(count);
+        for (let row of rslt.rows) {
+          expect(row, `CRUD ${label} row`).object();
+          if (nameIncl) expect(row.name, `CRUD ${label} row.name`).includes(nameIncl);
+          updated = new Date(row.updated) || row.updated;
+          expect(updated, `CRUD ${label} row.updated`).date();
+          if (lastUpdated) expect(updated, `CRUD ${label} row.updated > lastUpdated`).greaterThan(lastUpdated);
+          // expect binary report image
+          if (row.report) {
+            expect(row.report, 'row.report').to.be.buffer();
+            if (row.reportPath) {
+              const reportBuffer = readChunk.sync(row.reportPath, 0, 12);
+              const reportType = imageType(reportBuffer);
+              expect(reportType, 'row.report Image Type').to.be.object();
+              expect(reportType.mime, 'row.report Image Mime-Type').to.equal('image/png');
+            }
           }
         }
       }
-      lastUpdated = updated;
+      if (cnt > 0) lastUpdated = updated;
     };
 
-    const count = 2;
-    let key, create, read, update, del;
+    let create, read, update, del;
 
-    for (let i = 1; i <= count; i++) {
-      key = `table${i}.rows`;
-      create = getCrudOp('create', priv.vendor, key);
-      rslts[++rslti] = await create(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'create');
-    }
+    create = getCrudOp('create', priv.vendor, 'table.rows');
+    rslts[++rslti] = await create(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'create');
   
     read = getCrudOp('read', priv.vendor, 'table.rows');
     rslts[++rslti] = await read(priv.mgr, priv.vendor);
     crudly(rslts[rslti], 'read', 'TABLE');
 
-    for (let i = 1; i <= count; i++) {
-      key = `table${i}.rows`;
-      update = getCrudOp('update', priv.vendor, key);
-      rslts[++rslti] = await update(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'update');
-    }
+    update = getCrudOp('update', priv.vendor, 'table.rows');
+    rslts[++rslti] = await update(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'update');
   
     rslts[++rslti] = await read(priv.mgr, priv.vendor);
     crudly(rslts[rslti], 'update read', 'UPDATE');
   
-    for (let i = 1; i <= count; i++) {
-      key = `table${i}.rows`;
-      del = getCrudOp('delete', priv.vendor, key);
-      rslts[++rslti] = await del(priv.mgr, priv.vendor);
-      crudly(rslts[rslti], 'delete');
-    }
+    del = getCrudOp('delete', priv.vendor, 'table.rows');
+    rslts[++rslti] = await del(priv.mgr, priv.vendor);
+    crudly(rslts[rslti], 'delete');
   
     rslts[++rslti] = await read(priv.mgr, priv.vendor);
     crudly(rslts[rslti], 'delete read', null, 0);
@@ -183,23 +173,46 @@ class Tester {
   }
 
   static async execDriverOptionsAlt() {
-    const reader = priv.mgr.db[priv.vendor].read.table.rows({
-      binds: { name: 'table' },
-      driverOptions: {
-        exec: {
-          namedPlaceholders: false
+    const id = 400, name = 'TEST ALT', date = new Date();
+    let created, rslt;
+    try {
+      created = await priv.mgr.db[priv.vendor].create.table1.rows({
+        binds: {
+          id, name, created: date, updated: date
+        },
+        driverOptions: {
+          query: {
+            name: true // use internal stored procedure name
+          }
         }
-      }
-    });
-    const deleter = priv.mgr.db[priv.vendor].delete.table1.rows({
-      binds: { id: 500, id2: 500 },
-      driverOptions: {
-        exec: {
-          namedPlaceholders: false
+      });
+      rslt = await priv.mgr.db[priv.vendor].read.table.rows({
+        binds: { name },
+        driverOptions: {
+          query: {
+            rowMode: 'array'
+          }
         }
+      });
+    } finally {
+      if (created) {
+        await priv.mgr.db[priv.vendor].delete.table1.rows({
+          binds: { id }
+        });
       }
-    });
-    return Promise.all([reader, deleter]);
+    }
+
+    if (rslt) { // ensure the results are in array format from rowMode
+      expect(rslt.rows, 'alt rslt.rows').to.be.array();
+      expect(rslt.rows, 'alt rslt.rows').to.have.length(1);
+      expect(rslt.rows[0], 'alt rslt.rows[0]').to.be.array();
+      expect(rslt.rows[0], 'alt rslt.rows[0]').to.have.length(5);
+      expect(rslt.rows[0][0], 'alt rslt.rows[0][0] (id)').to.equal(id);
+      expect(rslt.rows[0][1], 'alt rslt.rows[0][1] (name)').to.equal(name);
+      expect(rslt.rows[0][2], 'alt rslt.rows[0][2] (report)').to.be.null();
+      expect(rslt.rows[0][3], 'alt rslt.rows[0][3] (created)').to.equal(date);
+      expect(rslt.rows[0][4], 'alt rslt.rows[0][4] (updated)').to.equal(date);
+    }
   }
 
   static async sqlInvalidThrow() {
@@ -207,7 +220,7 @@ class Tester {
   }
 
   static async bindsInvalidThrow() {
-    const date = datify();
+    const date = new Date();
     return priv.mgr.db[priv.vendor].create.table.rows({
       binds: {
         id: 500, name: 'SHOULD NEVER GET INSERTED', created: date, updated: date,
@@ -320,6 +333,19 @@ class Tester {
     return mgr.close();
   }
 
+  static async driverOptionsClient() {
+    const conf = getConf({
+      driverOptions: (prop, conn) => {
+        conn[prop] = conn[prop] || {};
+        conn[prop].client = conn[prop].client || {};
+        conn[prop].client.query_timeout = conn[prop].client.query_timeout || 100;
+      }
+    });
+    const mgr = new Manager(conf, priv.cache, priv.mgrLogit || generateTestAbyssLogger);
+    await mgr.init();
+    return mgr.close();
+  }
+
   static async hostPortSwap() {
     // need to set a conf override to prevent overwritting of privateConf properties for other tests
     const conf = getConf({ pool: null });
@@ -351,6 +377,29 @@ class Tester {
   static async closeBeforeInit() {
     const conf = getConf();
     const mgr = new Manager(conf, priv.cache, priv.mgrLogit || generateTestAbyssLogger);
+    return mgr.close();
+  }
+
+  static async state() {
+    const poolCount = 4;
+    const conf = getConf({
+      pool: (prop, conn) => {
+        conn[prop] = conn[prop] || {};
+        conn[prop].min = conn[prop].max = poolCount;
+      }
+    });
+    const mgr = new Manager(conf, priv.cache, priv.mgrLogit || generateTestAbyssLogger);
+    await mgr.init();
+
+    const state = await mgr.state();
+    expect(state, 'state').to.be.object();
+    expect(state.result, 'state.result').to.be.object();
+    expect(state.result[priv.vendor], `state.result.${priv.vendor}`).to.be.object();
+    expect(state.result[priv.vendor].pending, `state.result.${priv.vendor}.pending`).to.equal(0);
+    expect(state.result[priv.vendor].connection, `state.result.${priv.vendor}.connection`).to.be.object();
+    expect(state.result[priv.vendor].connection.count, `state.result.${priv.vendor}.connection.count`).to.equal(poolCount);
+    expect(state.result[priv.vendor].connection.inUse, `state.result.${priv.vendor}.connection.inUse`).to.equal(0);
+
     return mgr.close();
   }
 }
@@ -423,15 +472,6 @@ function getCrudOp(cmd, vendor, key, isSetup) {
  */
 function generateTestAbyssLogger() {
   return function testAbyssLogger() {};
-}
-
-/**
- * Formats a date to a string suitable for database use
- * @param {Date} [date=new Date()] The date to format for database use
- * @returns {String} A database suitible date string
- */
-function datify(date) {
-  return (date || new Date()).toISOString().replace('T', ' ').replace('Z', '');
 }
 
 // when not ran in a test runner execute static Tester functions (excluding what's passed into Main.run) 

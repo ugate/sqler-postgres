@@ -111,7 +111,9 @@ module.exports = class PGDialect {
     } catch (err) {
       error = err;
       const msg = `sqler-postgres: connection pool "${dlt.at.opts.id}" could not be created`;
-      if (dlt.at.errorLogger) dlt.at.errorLogger(`${msg} (passwords are omitted from error) ${JSON.stringify(err, null, ' ')}`);
+      if (dlt.at.errorLogger) {
+        dlt.at.errorLogger(`${msg} (passwords are omitted from error) ${JSON.stringify(err, null, ' ')}`);
+      }
       const pconf = Object.assign({}, dlt.at.opts.pool);
       delete pconf.password;
       err.message = `${err.message}\n${msg} for ${JSON.stringify(pconf, null, ' ')}`;
@@ -224,20 +226,34 @@ module.exports = class PGDialect {
    */
   async close() {
     const dlt = internal(this);
+    let error;
     try {
       if (dlt.at.logger) {
         dlt.at.logger(`sqler-postgres: Closing connection pool "${dlt.at.opts.id}" (uncommitted transactions: ${dlt.at.state.pending})`);
       }
-      if (dlt.at.pool) {
-        await dlt.at.pool.end();
+      const cproms = [];
+      for (let txId in dlt.at.connections) {
+        cproms.push(dlt.at.connections[txId].end());
       }
-      return dlt.at.state.pending;
+      if (cproms.length) {
+        await Promise.all(cproms);
+        dlt.at.connections = {};
+      }
+      if (dlt.at.pool) {
+        // pg module contains bug on some occasions calling end w/o a callback
+        // may result in unreported errors 
+        await dlt.at.pool.end(err => {
+          error = err;
+        });
+      }
     } catch (err) {
+      error = err;
       if (dlt.at.errorLogger) {
         dlt.at.errorLogger(`sqler-postgres: Failed to close connection pool "${dlt.at.opts.id}" (uncommitted transactions: ${dlt.at.state.pending})`, err);
       }
-      throw err;
     }
+    if (error) throw error;
+    return dlt.at.state.pending;
   }
 
   /**
