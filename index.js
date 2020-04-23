@@ -26,7 +26,6 @@
  * For example, `binds.name = '${SOME_PG_CONSTANT}'` will be interpolated as `binds.name = pg.SOME_PG_CONSTANT`.
  * @typedef {Manager~ExecOptions} PGExecOptions
  * @property {Object} [driverOptions] The `pg` module specific options.
- * @property {Object} [driverOptions.client] The client configuration that overrides the `client` {@link PGConnectionOptions}.
  * @property {Object} [driverOptions.query] The options passed into `pg.Client.query` during {@link Manager.exec}. See the `pg` module documentation
  * for a full listing of available query options.
  * When a value is a string surrounded by `${}`, it will be assumed to be a _constant_ property that resides on the `pg` module and will be interpolated
@@ -39,7 +38,9 @@
  */
 
 /**
- * PostgreSQL {@link Dialect} implementation for [`sqler`](https://ugate.github.io/sqler/)
+ * PostgreSQL {@link Dialect} implementation for [`sqler`](https://ugate.github.io/sqler/).
+ * Typically, an application will not have to directly interact with the dialect. All API interactions will take place using the {@link Manager}
+ * interface that resides within the [`sqler`](https://ugate.github.io/sqler/) module.
  */
 module.exports = class PGDialect {
 
