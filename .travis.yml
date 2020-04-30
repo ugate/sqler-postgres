@@ -9,7 +9,7 @@ node_js:
 #services:
 #  - postgresql
 env:
-  - REPO_VER=v1.3.3 POSTGRESQL_MAJOR=12
+  - REPO_VER=v1.5.5 POSTGRESQL_MAJOR=12
 before_install:
   - wget -O install-postgresql.sh https://raw.githubusercontent.com/ugate/repo/$REPO_VER/postgresql/install.sh
   - bash ./install-postgresql.sh
