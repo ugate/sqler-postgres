@@ -177,15 +177,14 @@ class Tester {
     let created, rslt;
     try {
       created = await priv.mgr.db[priv.vendor].create.table1.rows({
+        prepareStatement: true,
         binds: {
           id, name, created: date, updated: date
-        },
-        driverOptions: {
-          query: {
-            name: true // use internal stored procedure name
-          }
         }
       });
+      expect(created, 'prepared statement results').to.be.object();
+      expect(created.unprepare, 'prepared statement results unprepare').to.be.function();
+      await created.unprepare();
       rslt = await priv.mgr.db[priv.vendor].read.table.rows({
         binds: { name },
         driverOptions: {
@@ -221,10 +220,23 @@ class Tester {
 
   static async bindsInvalidThrow() {
     const date = new Date();
-    return priv.mgr.db[priv.vendor].create.table.rows({
+    return priv.mgr.db[priv.vendor].create.table1.rows({
       binds: {
-        id: 500, name: 'SHOULD NEVER GET INSERTED', created: date, updated: date,
-        id2: 500, name2: 'SHOULD NEVER GET INSERTED', /* report2 missing should throw error */ created2: date, updated2: date
+        id: 500, name: 'SHOULD NEVER GET INSERTED (from bindsInvalidThrow)', /* "created" missing should throw error */ updated: date
+      }
+    });
+  }
+
+  static async preparedStatementNameThrow() {
+    const date = new Date();
+    return priv.mgr.db[priv.vendor].create.table1.rows({
+      binds: {
+        id: 500, name: 'SHOULD NEVER GET INSERTED (from bindsInvalidThrow)', created: date, updated: date
+      },
+      driverOptions: {
+        query: {
+          name: 'SOME_PREPARED_STATEMENT_NAME' // should fail since PS names use meta
+        }
       }
     });
   }
@@ -397,7 +409,8 @@ class Tester {
     expect(state.result[priv.vendor], `state.result.${priv.vendor}`).to.be.object();
     expect(state.result[priv.vendor].pending, `state.result.${priv.vendor}.pending`).to.equal(0);
     expect(state.result[priv.vendor].connection, `state.result.${priv.vendor}.connection`).to.be.object();
-    expect(state.result[priv.vendor].connection.count, `state.result.${priv.vendor}.connection.count`).to.equal(poolCount);
+    // there is no min pool count (should have 1 connection from init), need to ensure that the max is not exceeded?
+    expect(state.result[priv.vendor].connection.count, `state.result.${priv.vendor}.connection.count`).to.equal(1);
     expect(state.result[priv.vendor].connection.inUse, `state.result.${priv.vendor}.connection.inUse`).to.equal(0);
 
     return mgr.close();

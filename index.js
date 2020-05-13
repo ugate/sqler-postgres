@@ -1,5 +1,8 @@
 'use strict';
 
+// postgres has a limit of 63 characters for prepared statements
+const PREPARED_STMT_NAME_MAX = 63;
+
 /**
  * PostgreSQL specific extension of the {@link Manager~ConnectionOptions} from the [`sqler`](https://ugate.github.io/sqler/) module.
  * @typedef {Manager~ConnectionOptions} PGConnectionOptions
@@ -122,7 +125,7 @@ module.exports = class PGDialect {
       throw err;
     } finally {
       if (conn) {
-        await operation(dlt, 'release', false, conn, opts, error)();
+        await operation(dlt, 'release', false, conn, opts, null, error)();
       }
     }
   }
@@ -152,14 +155,14 @@ module.exports = class PGDialect {
    */
   async exec(sql, opts, frags, meta, errorOpts) {
     const dlt = internal(this);
-    let conn, bndp = {}, rslts;
+    let conn, bndp = {}, dopts, rslts, error;
     try {
       // interpolate and remove unused binds since
       // PostgreSQL only accepts the exact number of bind parameters (also, cuts down on payload bloat)
       bndp = dlt.at.track.interpolate(bndp, opts.binds, dlt.at.driver, props => sql.includes(`:${props[0]}`));
 
       // driver options query override
-      const dopts = opts.driverOptions || {};
+      dopts = opts.driverOptions || {};
       if (!dopts.query) dopts.query = {};
       dopts.query.values = [];
       dopts.query.text = dlt.at.track.positionalBinds(sql, bndp, dopts.query.values, (name, index) => `$${index + 1}`);
@@ -172,36 +175,56 @@ module.exports = class PGDialect {
         rtn.raw = rslts;
       } else {
         // name will cause pg to use a prepared statement
-        if (dopts.query.name === true) dopts.query.name = meta.name;
+        let psname;
+        if (opts.prepareStatement) {
+          psname = meta.name.length > PREPARED_STMT_NAME_MAX ? meta.name.substring(PREPARED_STMT_NAME_MAX - meta.name.length) : meta.name;
+          if (dopts.query.name) {
+            throw new Error(`Prepared statements use internally generated names based upon SQL file meta. Attempted to use "${psname
+              }", but found driverOptions.query.name = "${dopts.query.name}"`);
+          }
+        } else if (dopts.query.name) {
+          throw new Error('Prepared statements use internally generated names based upon SQL file meta, but found ' +
+            `execOpts.driverOptions.query.name = "${dopts.query.name}"`);
+        }
+        dopts.query.name = psname;
         conn = await dlt.this.getConnection(opts);
         rslts = await conn.query(dopts.query);
         rtn.rows = rslts.rows;
         rtn.raw = rslts;
-        if (opts.autoCommit) {
-          // PostgreSQL has no option to autocommit during SQL execution
-          await operation(dlt, 'commit', false, conn, opts)();
-        } else {
-          dlt.at.state.pending++;
-          rtn.commit = operation(dlt, 'commit', true, conn, opts);
-          rtn.rollback = operation(dlt, 'rollback', true, conn, opts);
+
+        if (opts.prepareStatement) {
+          rtn.unprepare = unprepared(dlt, opts, psname);
+        }
+        if (opts.transactionId) {
+          if (opts.autoCommit) {
+            // PostgreSQL has no option to autocommit during SQL execution
+            await operation(dlt, 'commit', false, conn, opts, rtn.unprepare)();
+          } else {
+            dlt.at.state.pending++;
+            rtn.commit = operation(dlt, 'commit', true, conn, opts, rtn.unprepare);
+            rtn.rollback = operation(dlt, 'rollback', true, conn, opts, rtn.unprepare);
+          }
         }
       }
 
       return rtn;
     } catch (err) {
-      if (conn) {
-        try {
-          await operation(dlt, 'end', false, conn, opts)();
-        } catch (cerr) {
-          err.closeError = cerr;
-        }
-      }
+      error = err;
       const msg = ` (BINDS: [${Object.keys(bndp)}], FRAGS: ${Array.isArray(frags) ? frags.join(', ') : frags})`;
       if (dlt.at.errorLogger) {
         dlt.at.errorLogger(`Failed to execute the following SQL: ${sql}`, err);
       }
       err.message += msg;
+      err.sqlerPG = dopts;
       throw err;
+    } finally {
+      if (conn) {
+        try {
+          await operation(dlt, 'release', false, conn, opts)();
+        } catch (cerr) {
+          if (error) error.closeError = cerr;
+        }
+      }
     }
   }
 
@@ -288,13 +311,15 @@ module.exports = class PGDialect {
  * @param {Boolean} reset Truthy to reset the pending connection and transaction count when the operation completes successfully
  * @param {Object} conn The connection
  * @param {Manager~ExecOptions} [opts] The {@link Manager~ExecOptions}
+ * @param {Function} [preop] A no-argument async function that will be executed prior to the operation
  * @param {Error} [error] An originating error where any oprational errors will be set as a property of the passed error
  * (e.g. `name = 'close'` would result in `error.closeError = someInternalError`). __Internal Errors will not be thrown.__
  * @returns {Function} A no-arguement `async` function that returns the number or pending transactions
  */
-function operation(dlt, name, reset, conn, opts, error) {
+function operation(dlt, name, reset, conn, opts, preop, error) {
   return async () => {
     let ierr;
+    if (preop) await preop();
     try {
       if (dlt.at.logger) {
         dlt.at.logger(`sqler-postgres: Performing ${name} on connection pool "${dlt.at.opts.id}" (uncommitted transactions: ${dlt.at.state.pending})`);
@@ -331,6 +356,41 @@ function operation(dlt, name, reset, conn, opts, error) {
       }
     }
     return dlt.at.state.pending;
+  };
+}
+
+/**
+ * 
+ * @private
+ * @param {Object} dlt The internal PostgreSQL object instance
+ * @param {Manager~ExecOptions} [opts] The {@link Manager~ExecOptions}
+ * @param {String} name The prepared statement name that will be deallocated
+ * @returns {Function} A no-arguement `async` function that returns `undefined`
+ */
+function unprepared(dlt, opts, name) {
+  return async () => {
+    let conn;
+    try {
+      conn = await dlt.this.getConnection({});
+      await conn.query({
+        text: `DEALLOCATE ${name}`
+      });
+      if (conn.connection && conn.connection.parsedStatements && conn.connection.parsedStatements.hasOwnProperty(name)) {
+        // TODO : not public API facing
+        delete conn.connection.parsedStatements[name];
+      }
+    } catch (err) {
+      err.message += ` FAILED to deallocate/unprepare prepared statement ${name}`;
+      throw err;
+    } finally {
+      if (conn) {
+        try {
+          await operation(dlt, 'release', false, conn, opts)();
+        } catch (cerr) {
+          err.closeError = cerr;
+        }
+      }
+    }
   };
 }
 
