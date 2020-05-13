@@ -101,7 +101,7 @@ module.exports = class PGDialect {
    * @returns {Object} The PostgreSQL connection pool
    */
   async init(opts) {
-    const dlt = internal(this), numSql = opts.numOfPreparedStmts;
+    const dlt = internal(this), numSql = opts.numOfPreparedFuncs;
     let conn, error;
     try {
       dlt.at.pool = new dlt.at.driver.Pool(dlt.at.opts.pool);
