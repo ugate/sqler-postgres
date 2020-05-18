@@ -1,6 +1,6 @@
 {
   "name": "sqler-postgres",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "@ugate/sqler dialect for PostgreSQL",
   "main": "index.js",
   "engines": {
