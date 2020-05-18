@@ -62,7 +62,7 @@ module.exports = class PGDialect {
     const dlt = internal(this);
     dlt.at.track = track;
     dlt.at.driver = require('pg');
-    dlt.at.connections = {};
+    dlt.at.connections = new Map();
     dlt.at.opts = {
       autoCommit: true, // default autoCommit = true to conform to sqler
       id: `sqlerPGGen${Math.floor(Math.random() * 10000)}`,
@@ -136,12 +136,13 @@ module.exports = class PGDialect {
    */
   async beginTransaction(txId) {
     const dlt = internal(this);
-    if (dlt.at.connections[txId]) return;
+    if (dlt.at.connections.get(txId)) return;
     if (dlt.at.logger) {
       dlt.at.logger(`sqler-postgres: Beginning transaction "${txId}" on connection pool "${dlt.at.opts.id}"`);
     }
-    dlt.at.connections[txId] = await dlt.this.getConnection({ transactionId: txId });
-    return dlt.at.connections[txId].query('BEGIN');
+    const conn = await dlt.this.getConnection({ transactionId: txId });
+    dlt.at.connections.set(txId, conn);
+    return conn.query('BEGIN');
   }
 
   /**
@@ -177,7 +178,7 @@ module.exports = class PGDialect {
         // name will cause pg to use a prepared statement
         let psname;
         if (opts.prepareStatement) {
-          psname = meta.name.length > PREPARED_STMT_NAME_MAX ? meta.name.substring(PREPARED_STMT_NAME_MAX - meta.name.length) : meta.name;
+          psname = meta.name.length > PREPARED_STMT_NAME_MAX ? meta.name.substring(meta.name.length - PREPARED_STMT_NAME_MAX) : meta.name;
           if (dopts.query.name) {
             throw new Error(`Prepared statements use internally generated names based upon SQL file meta. Attempted to use "${psname
               }", but found driverOptions.query.name = "${dopts.query.name}"`);
@@ -237,7 +238,7 @@ module.exports = class PGDialect {
   async getConnection(opts) {
     const dlt = internal(this);
     const txId = opts.transactionId;
-    let conn = txId ? dlt.at.connections[txId] : null;
+    let conn = txId ? dlt.at.connections.get(txId) : null;
     if (!conn) {
       return dlt.at.pool.connect();
     }
@@ -256,12 +257,12 @@ module.exports = class PGDialect {
         dlt.at.logger(`sqler-postgres: Closing connection pool "${dlt.at.opts.id}" (uncommitted transactions: ${dlt.at.state.pending})`);
       }
       const cproms = [];
-      for (let txId in dlt.at.connections) {
-        cproms.push(dlt.at.connections[txId].end());
+      for (let [txId, conn] of dlt.at.connections) {
+        cproms.push(conn.end());
       }
       if (cproms.length) {
         await Promise.all(cproms);
-        dlt.at.connections = {};
+        dlt.at.connections.clear();
       }
       if (dlt.at.pool) {
         // pg module contains bug on some occasions calling end w/o a callback
@@ -330,7 +331,7 @@ function operation(dlt, name, reset, conn, opts, preop, error) {
         await conn[name]();
       }
       if (reset) { // not to be confused with pg connection.reset();
-        if (opts && opts.transactionId) delete dlt.at.connections[opts.transactionId];
+        if (opts && opts.transactionId) dlt.at.connections.delete(opts.transactionId);
         dlt.at.state.pending = 0;
       }
     } catch (err) {
