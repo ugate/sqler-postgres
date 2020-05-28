@@ -38,9 +38,9 @@
     "jsdocp": "^1.0.3",
     "minami": "^1.2.3",
     "moment-db": "^2.0.0",
-    "pg": "^8.2.0",
+    "pg": "^8.2.1",
     "read-chunk": "^3.2.0",
-    "sqler": "^5.12.1"
+    "sqler": "^5.12.2"
   },
   "files": [
     "/index.js",
