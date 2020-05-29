@@ -141,8 +141,8 @@ module.exports = class PGDialect {
       dlt.at.logger(`sqler-postgres: Beginning transaction "${txId}" on connection pool "${dlt.at.opts.id}"`);
     }
     const conn = await dlt.this.getConnection({ transactionId: txId });
+    await conn.query('BEGIN');
     dlt.at.connections.set(txId, conn);
-    return conn.query('BEGIN');
   }
 
   /**
