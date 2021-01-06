@@ -2,6 +2,7 @@
   "univ": {
     "db": {
       "postgres": {
+        "host": "sqler_postgres",
         "username":"postgres",
         "password": "p0stgr3slocal"
       }
