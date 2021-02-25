@@ -80,7 +80,7 @@ module.exports = class PGTestDialect extends PGDialect {
 
 /**
  * Expects the PostgreSQL driver options (when present)
- * @param {Manager~ConnectionOptions} opts The connection options to check
+ * @param {SQLERConnectionOptions} opts The connection options to check
  * @param {PGTestDialect} dlt The test dialect
  */
 function expectDriverOptions(opts, dlt) {

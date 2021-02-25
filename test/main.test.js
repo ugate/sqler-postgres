@@ -49,4 +49,6 @@ lab.experiment(plan, () => {
   lab.test(`${plan}: Execution Driver Options and Prepared Statement (Alternatives)`, { timeout: TEST_TKO }, Tester.execDriverOptionsAlt);
   lab.test(`${plan}: Invalid SQL`, Labrat.expectFailure('onUnhandledRejection', { expect, label: 'invalid SQL throw' }, Tester.sqlInvalidThrow));
   lab.test(`${plan}: Invalid bind parameter`, Labrat.expectFailure('onUnhandledRejection', { expect, label: 'invalid bind param throw' }, Tester.bindsInvalidThrow));
+  lab.test(`${plan}: Leave transaction open`, { timeout: TEST_TKO }, Tester.transactionLeaveOpen);
+  lab.test(`${plan}: Rollback transaction`, { timeout: TEST_TKO }, Tester.transactionRollback);
 });

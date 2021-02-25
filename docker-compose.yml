@@ -21,6 +21,8 @@ services:
       test: pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -p "$$POSTGRES_PORT"
       timeout: 20s
       retries: 10
+    ports:
+      - 5432:5432
   # NodeJS for sqler dialect testing
   sqler_postgres_dialect:
     container_name: sqler_postgres_dialect

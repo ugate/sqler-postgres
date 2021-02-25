@@ -242,6 +242,23 @@ class Tester {
     });
   }
 
+  static async transactionLeaveOpen() {
+    return test.mgr.db[test.vendor].beginTransaction();
+  }
+
+  static async transactionRollback() {
+    const tx = await test.mgr.db[test.vendor].beginTransaction();
+    const date = new Date();
+    const rslt = await test.mgr.db[test.vendor].create.table1.rows({
+      autoCommit: false,
+      transactionId: tx.id,
+      binds: {
+        id: 500, name: 'SHOULD NEVER GET INSERTED (from transactionRollback)', created: date, updated: date
+      }
+    });
+    return tx.rollback();
+  }
+
   //====================== Configurations ======================
 
   static async initThrow() {
