@@ -205,7 +205,7 @@ module.exports = class PGDialect {
         try {
           await operation(dlt, 'release', false, conn, opts)();
         } catch (cerr) {
-          if (error) error.closeError = cerr;
+          if (error) error.releaseError = cerr;
         }
       }
     }
@@ -281,7 +281,7 @@ module.exports = class PGDialect {
  * @param {String} [preop] An operation name that will be performed before the actual operation. The following values are valid:
  * 1. __`unprepare`__ - Any un-prepare functions that are associated with the passed {@link PGTransactionObject} will be executed.
  * @param {Error} [error] An originating error where any oprational errors will be set as a property of the passed error
- * (e.g. `name = 'close'` would result in `error.closeError = someInternalError`). __Internal Errors will not be thrown.__
+ * (e.g. `name = 'close'` would result in `error.releaseError = someInternalError`). __Internal Errors will not be thrown.__
  * @returns {Function} A no-arguement `async` function that returns the number or pending transactions
  */
 function operation(dlt, name, reset, txoOrConn, opts, preop, error) {
@@ -380,7 +380,7 @@ function unprepared(dlt, opts, name) {
               opts ? JSON.stringify(opts) : 'N/A'}`, cerr);
           }
           if (error) {
-            error.closeError = cerr;
+            error.releaseError = cerr;
           }
         }
       }
